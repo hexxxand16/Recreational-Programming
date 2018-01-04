@@ -77,8 +77,8 @@ class game:
                     return i  # Play highest non heart
                 return self.p1[0]  # Play lowest heart (only if all cards are hearts)
             else:  # Going second
-                for i in self.p1:
-                    if i.suit == self.p2_play.suit and i.rank > self.p2_play.rank:
+                for i in reversed(self.p1):
+                    if i.suit == self.p2_play.suit:
                         return i  # Play lowest card that beats opponent
 
                 for i in self.p1:
@@ -98,8 +98,8 @@ class game:
                     return i  # Play highest non heart
                 return self.p2[0]  # Play lowest heart (only if all cards are hearts)
             else:
-                for i in self.p2:
-                    if i.suit == self.p1_play.suit and i.rank > self.p1_play.rank:
+                for i in reversed(self.p2):
+                    if i.suit == self.p1_play.suit:
                         return i  # Play lowest card that beats opponent
 
                 for i in self.p2:
