@@ -1,11 +1,14 @@
 import random
 
 
-# card object 
+# card object
 class Card:
     def __init__(self, suit, rank):
         self.suit = suit
         self.rank = rank
+
+    def __str__(self):
+        return "{} of {}".format(self.rank, self.suit)
 
 
 # function for creating deck
@@ -63,6 +66,14 @@ class game:
         self.p2_score = 0
         self.p1_first = False
 
+    def cpu(self, num, predict=False):
+        if num == 1:
+            return self.five(predict)
+        elif num == 2:
+            return self.basic(predict)
+        elif num == 3:
+            return self.heart(predict)
+
     def five(self, predict=False):
         if predict:
             if self.round < 5:
@@ -77,9 +88,13 @@ class game:
                     return i  # Play highest non heart
                 return self.p1[0]  # Play lowest heart (only if all cards are hearts)
             else:  # Going second
-                for i in reversed(self.p1):
+                for i in self.p1:
+                    if i.suit == self.p2_play.suit and i.rank > self.p2_play.rank:
+                        return i  # Check and play card that beats opponent, if possible
+
+                for i in self.p1:
                     if i.suit == self.p2_play.suit:
-                        return i  # Play lowest card that beats opponent
+                        return i  # Play worst card to follow suit
 
                 for i in self.p1:
                     if i.suit == "hearts":
@@ -98,9 +113,34 @@ class game:
                     return i  # Play highest non heart
                 return self.p2[0]  # Play lowest heart (only if all cards are hearts)
             else:
-                for i in reversed(self.p2):
+                for i in self.p2:
+                    if i.suit == self.p1_play.suit and i.rank > self.p1_play.rank:
+                        return i  # Check and play card that beats opponent, if possible
+
+                for i in self.p2:
                     if i.suit == self.p1_play.suit:
-                        return i  # Play lowest card that beats opponent
+                        return i  # Play worst card to follow suit
+
+                for i in self.p2:
+                    if i.suit == "hearts":
+                        return i  # Play heart if no other play
+
+                return self.p2[0]  # Play worst card if no moves
+
+    def heart(self, predict=False):
+        if predict:
+            return count_suit(self.p2, "hearts")
+        else:
+            if not self.trick_first:
+                return self.p2[-1]  # Plays best card (usually heart)
+            else:
+                for i in self.p2:
+                    if i.suit == self.p1_play.suit and i.rank > self.p1_play.rank:
+                        return i  # Check and play card that beats opponent, if possible
+
+                for i in self.p2:
+                    if i.suit == self.p1_play.suit:
+                        return i  # Play worst card to follow suit
 
                 for i in self.p2:
                     if i.suit == "hearts":
@@ -120,22 +160,25 @@ class game:
             hand_sort(self.p1)
             hand_sort(self.p2)
 
+            # Select Cpu
+            A, B = 1, 3
+
             # Gameplay
-            self.trick_first = True
-            p1_predict = self.five(True)
-            p2_predict = self.basic(True)
+            self.trick_first = self.p1_first
+            p1_predict = self.cpu(A, True)
+            p2_predict = self.cpu(B, True)
             while len(self.p1) != 0 or len(self.p2) != 0:
                 if self.trick_first:  # p1 first
-                    self.p1_play = self.five()
-                    self.p2_play = self.basic()
+                    self.p1_play = self.cpu(A)
+                    self.p2_play = self.cpu(B)
                     if card_compare(self.p1_play, self.p2_play):
                         p1_trick += 1
                     else:
                         p2_trick += 1
                         self.trick_first = False
                 else:  # p2 first
-                    self.p2_play = self.basic()
-                    self.p1_play = self.five()
+                    self.p2_play = self.cpu(B)
+                    self.p1_play = self.cpu(A)
                     if card_compare(self.p2_play, self.p1_play):
                         p2_trick += 1
                     else:
@@ -158,13 +201,13 @@ class game:
                     self.p2_score += 10
             self.p1_score += p1_trick
             self.p2_score += p2_trick
-            
+
 
 def main():
     Game = game()
     p1 = 0
     p2 = 0
-    for i in range(100000):
+    for i in range(10000):
         Game.play()
         if Game.p1_score > Game.p2_score:
             p1 += 1
