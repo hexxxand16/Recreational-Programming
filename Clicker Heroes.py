@@ -12,6 +12,8 @@ def mob_hp(zone, boss=False):
         hp *= Decimal(139 + 1.55**139 * 1.145**360)
         for i in range(501, zone, 1):
             hp *= Decimal(1.145 + 0.001 * math.floor((i - 1) / 500))
+    else:
+        hp = Decimal(1.545**(zone - 200001) * 1.240 * 10**25409 + (zone - 1) * 10)
 
     if boss:
         hp *= 10
