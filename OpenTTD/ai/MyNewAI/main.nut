@@ -26,7 +26,8 @@ function MyNewAI::Start() {
         local myRef = refineries.Begin();
         AISign.BuildSign(AIIndustry.GetLocation(myRef), "destination");
 
-        this.BuildDock(myRef)
+        local myDock = this.BuildDock(myRef);
+        local buoys = this.BuildBuoy(myDock, myRig);
     }
 }
 
@@ -46,13 +47,13 @@ function MyNewAI::BuildDock(industry) {
     }
 }
 
-function MyTest::BuildBuoys(dock, rig) {
+function MyNewAI::BuildBuoys(dock, rig) {
     local rigStation = AIIndustry.GetDockLocation(myRig);
     local distance = AIMap.DistanceMax(dock, rigStation);
     AILog.Info("Two stations are " + distance + " tiles apart.");
 
-    local xDistance = AIMap.GetTileX(rigStation) - AIMap.GetTileX(dockLocation);
-    local yDistance = AIMap.GetTileY(rigStation) - AIMap.GetTileY(dockLocation);
+    local xDistance = AIMap.GetTileX(rigStation) - AIMap.GetTileX(dock);
+    local yDistance = AIMap.GetTileY(rigStation) - AIMap.GetTileY(dock);
     AILog.Info("X distance: " + xDistance);
     AILog.Info("Y distance: " + yDistance);
 
@@ -63,8 +64,8 @@ function MyTest::BuildBuoys(dock, rig) {
     AILog.Info("Y segment size: " + ySegSize);
 
     local buoys = AIlist();
-    local xLoc = AIMap.GetTileX(dockLocation);
-    local yLoc = AIMap.GetTileY(dockLocation);
+    local xLoc = AIMap.GetTileX(dock);
+    local yLoc = AIMap.GetTileY(dock);
     for (local i = 0; i < numSegments; i++) {
         xLoc = xLoc + xSegSize;
         yLoc = yLoc + ySegSize;
@@ -72,13 +73,12 @@ function MyTest::BuildBuoys(dock, rig) {
         local buoy = this.BuildBuoy(xLoc, yLoc);
         if (buoy) {
             buoys.AddItem(buoy, 0)
-            }
         }
     }
-    return buoys;
+    return buoys;    
 }
 
-function MyTest::BuildBuoy(x, y) {
+function MyNewAI::BuildBuoy(x, y) {
     local tile = AIMap.GetTileIndex(x, y);
     if (AIMarine.BuildBuoy(tile)) {
         return AIWaypoint.GetWaypointID(tile);
