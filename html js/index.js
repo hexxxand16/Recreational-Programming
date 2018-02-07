@@ -19,7 +19,7 @@ function constrain(n, a, b) {
 
 // Generates random numbers between a and b (inclusive)
 function rng(a, b) {
-    return Math.random() * (b - a) + a
+    return Math.random() * (b - a) + a;
 }
 
 function ship(xpos, ypos) {
@@ -74,7 +74,7 @@ function bullet(xpos, ypos, dx, dy) {
         c.arc(this.x, this.y, 5, 0, 2 * Math.PI);
         c.stroke();
     }
-    
+
     this.movement = function() {
         this.x += this.dx;
         this.y += this.dy;
@@ -90,7 +90,7 @@ var map = {};
 var player = new ship(400, 400);
 
 onkeydown = onkeyup = function(e) {
-    map[e.keyCode] = e.type == 'keydown';
+    map[e.keyCode] = e.type == "keydown";
 }
 
 window.setInterval(spray, 1);

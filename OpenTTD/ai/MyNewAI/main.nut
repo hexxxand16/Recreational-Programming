@@ -48,7 +48,7 @@ function MyNewAI::BuildDock(industry) {
 }
 
 function MyNewAI::BuildBuoys(dock, rig) {
-    local rigStation = AIIndustry.GetDockLocation(myRig);
+    local rigStation = AIIndustry.GetDockLocation(rig);
     local distance = AIMap.DistanceMax(dock, rigStation);
     AILog.Info("Two stations are " + distance + " tiles apart.");
 
