@@ -17,16 +17,30 @@ function randInt(a, b) {
     return Math.floor(rng(a, b + 1))
 }
 
+var set_1A = ["Wooden", "Paper", "Trash", "Candy", "Copper", "Blunt", "Cheese", "Rusted", "Broken",
+     "Inferior", "Unlucky"];
+var set_1B = ["Iron", "Steel", "Superior", "Silver", "Gold", "Sharp", "Lucky", "Powerful", "Fiery", "Frozen",
+    "Beserker"];
+var set_1C = ["Titanium", "Diamond", "Obsidian", "Ultimate", "Evil", "Chaotic", "Worldly", "Unobtainium"];
+
 function Weapon(name, dmg, rarity) {
     this.name = name;
     this.rarity = rarity;
     this.minDmg = Math.max(Math.floor(dmg * 0.8), 1);
     this.maxDmg = Math.max(Math.floor(dmg * 1.2), 1);
+    this.sprite = [0, 0];
+
+    this.generateSprite = function(rarity) {
+        if (rarity === "common" || rarity == "uncommon" || rarity == "rare") {
+            this.sprite[0] = randInt(0, 3);
+        } else {
+            this.sprite[0] = randInt(4, 7);
+        }
+    }
 
     this.draw = function(xpos, ypos) {
         image = new Image();
         image.src = "Sprites/Preview.png";
-        c.beginPath();
 
         switch(this.rarity) {
             case "common":
@@ -51,10 +65,13 @@ function Weapon(name, dmg, rarity) {
                 console.log("You made a typo you idiot.");
                 break;
         }
-        c.drawImage(image, 0, 0, 96, 96, xpos, ypos, 32, 32);
+        c.beginPath();        
+        c.drawImage(image, 96 * this.sprite[0], 96 * this.sprite[1], 96, 96, xpos, ypos, 32, 32);
         c.rect(xpos, ypos, 32, 32);
         c.stroke();
     }
+
+    this.generateSprite(this.rarity);
 }
 
 function Enemy(xpos, ypos, hp, def) {
@@ -70,7 +87,7 @@ function Enemy(xpos, ypos, hp, def) {
 }
 
 function attack(weapon, enemy) {
-    enemy.hp -= Math.floor(rng(weapon.minDmg, weapon.maxDmg));
+    enemy.hp -= Math.floor(rng(weapon.minDmg, weapon.maxDmg) - enemy.def / 2);
     console.log(enemy.hp)
 }
 
@@ -91,27 +108,52 @@ function generateRarity() {
     }
 }
 
-function createWeapon() {
-    var name = "Steel Sword";    
+function generateName(rarity) {
+    if (rarity === "common" || rarity === "uncommon") {
+        return set_1A[randInt(0, set_1A.length - 1)] + " Sword";
+    } else if (rarity === "rare"|| rarity == "epic") {
+        return set_1B[randInt(0, set_1B.length - 1)] + " Sword";
+    } else {
+        return set_1C[randInt(0, set_1C.length - 1)] + " Sword";
+    }
+}
+
+function generateATK(rarity, level) {
+    var atk = randInt(1 + 2 * level, 3 + 2 * level);
+    if (rarity === "uncommon") {
+        atk *= 1.2;
+    } else if (rarity === "rare") {
+        atk *= 1.5;
+    } else if (rarity === "epic") {
+        atk *= 2;
+    } else if (rarity === "legendary") {
+        atk *= 2.5;
+    } else if (rarity === "mythical") {
+        atk *= 3;
+    }
+    return Math.floor(atk);
+}
+
+function createWeapon() {   
     var rarity = generateRarity();
-    var atk = randInt(1, 10);
+    var name = generateName(rarity);
+    var atk = generateATK(rarity, 1);
     var weapon = new Weapon(name, atk, rarity);
     inventory.push(weapon)
 }
 
 function spawnEnemy() {
     hp = randInt(50, 100);
-    def = randInt(0, 20);
+    def = randInt(0, 10);
     var enemy = new Enemy(theEnemy.x, theEnemy.y, hp, def);
     return enemy;
 }
 
 var inventory = [];
-var leftHand;
 leftHand = new Weapon("Wooden Sword", 10, "legendary");
 theEnemy = new Enemy(160, 160, 40, 0);
 
-var spawnWeapon = setInterval(createWeapon, 5);
+var spawnWeapon = setInterval(createWeapon, 250);
 var dealDamage = setInterval(function() {attack(leftHand, theEnemy)}, 1000);
 function update() {
     requestAnimationFrame(update);
@@ -121,6 +163,7 @@ function update() {
     for (let i = 0; i < inventory.length; i++) {
         inventory[i].draw(36 * (i % 16), 200 + 36 * Math.floor(i / 16));
     }
+
     if (inventory.length > 176) {
         inventory = [];
     }
