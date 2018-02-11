@@ -16,12 +16,41 @@ function rng(a, b) {
 function randInt(a, b) {
     return Math.floor(rng(a, b + 1))
 }
+var mouse = {
+    x: undefined,
+    y: undefined
+};
 
-var set_1A = ["Wooden", "Paper", "Trash", "Candy", "Copper", "Blunt", "Cheese", "Rusted", "Broken",
-     "Inferior", "Unlucky"];
-var set_1B = ["Iron", "Steel", "Superior", "Silver", "Gold", "Sharp", "Lucky", "Powerful", "Fiery", "Frozen",
-    "Beserker"];
-var set_1C = ["Titanium", "Diamond", "Obsidian", "Ultimate", "Evil", "Chaotic", "Worldly", "Unobtainium"];
+window.addEventListener("mousemove", function(m) {
+    mouse.x = m.x;
+    mouse.y = m.y;
+});
+
+var set_1A = ["Wooden", "Paper", "Trash", "Candy", "Copper", "Blunt", "Cheese", "Rusted", "Broken", 
+    "Inferior", "Unlucky", "Cursed", "Bronze"];
+var set_1B = ["Superior", "Iron", "Steel", "Silver", "Gold", "Platinum", "Sharp", "Lucky", "Powerful", "Fiery",  
+    "Frozen", "Beserker", "Magical"];
+var set_1C = ["Titanium", "Diamond", "Obsidian", "Ultimate", "Evil", "Chaotic", "Unobtainium"];
+
+function getRarityColour(rarity) {
+    switch(rarity) {
+        case "common":
+            return "white";
+        case "uncommon":
+            return "green";
+        case "rare":
+            return "blue";
+        case "epic":
+            return "rebeccapurple";
+        case "legendary":
+            return "orangered";
+        case "mythical":
+            return "violet";
+        default:
+            console.log("You made a typo you idiot.");
+            break;
+    }
+}
 
 function Weapon(name, dmg, rarity) {
     this.name = name;
@@ -42,29 +71,7 @@ function Weapon(name, dmg, rarity) {
         image = new Image();
         image.src = "Sprites/Preview.png";
 
-        switch(this.rarity) {
-            case "common":
-                c.strokeStyle = "white";
-                break;
-            case "uncommon":
-                c.strokeStyle = "green";
-                break;
-            case "rare":
-                c.strokeStyle = "blue";
-                break;
-            case "epic":
-                c.strokeStyle = "rebeccapurple";
-                break;
-            case "legendary":
-                c.strokeStyle = "orangered";
-                break;
-            case "mythical":
-                c.strokeStyle = "violet";
-                break;
-            default:
-                console.log("You made a typo you idiot.");
-                break;
-        }
+        c.strokeStyle = getRarityColour(this.rarity)
         c.beginPath();        
         c.drawImage(image, 96 * this.sprite[0], 96 * this.sprite[1], 96, 96, xpos, ypos, 32, 32);
         c.rect(xpos, ypos, 32, 32);
@@ -149,6 +156,24 @@ function spawnEnemy() {
     return enemy;
 }
 
+function dispWindow(mouse) {
+    var y = Math.floor((mouse.y - 200) / 36);
+    var x = Math.floor(mouse.x / 36);
+    var item = inventory[x + 16 * y]
+    if (item != undefined) {
+        c.beginPath();
+        c.strokeStyle = "white"
+        c.rect(mouse.x, mouse.y, 140, -200);
+        c.fill();
+        c.stroke();
+        c.fillStyle = "white";
+        c.fillText("Name: " + item.name, mouse.x, mouse.y - 190);
+        c.fillText("Damage: " + item.minDmg + " - " + item.maxDmg, mouse.x, mouse.y - 180);
+        c.fillStyle = getRarityColour(item.rarity);
+        c.fillText("Rarity: " + item.rarity, mouse.x, mouse.y - 170)
+    }
+}
+
 var inventory = [];
 leftHand = new Weapon("Wooden Sword", 10, "legendary");
 theEnemy = new Enemy(160, 160, 40, 0);
@@ -170,6 +195,7 @@ function update() {
     if (theEnemy.hp <= 0) {
         theEnemy = spawnEnemy();
     }
+    dispWindow(mouse);
 }
 
 update();
