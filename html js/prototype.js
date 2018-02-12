@@ -104,20 +104,34 @@ function Weapon(name, dmg, rarity) {
 function Enemy(xpos, ypos, hp, def) {
     this.x = xpos;
     this.y = ypos;
+    this.maxHp = hp;
     this.hp = hp;
     this.def = def;
+    this.sprite = randInt(0, 200);
 
     this.draw = function() {
         image = new Image();
-        image.src = "Sprites/Enemy/enemy2.png";
+        image.src = "Sprites/Enemy/enemy" + this.sprite + ".png";
 
         c.drawImage(image, 450, 32, 64, 64);
+
+        // Drawing HP bar
+        c.strokeStyle = "white";
+        c.beginPath();
+        c.rect(432, 100, 100, 10);
+        c.stroke();
+        c.fillStyle = "red";
+        c.beginPath();
+        c.rect(432.5, 100.5, Math.floor(this.hp / this.maxHp * 99) , 9);
+        c.fill();
+        c.fillStyle = "white"
+        c.fillText("HP: " + this.hp + "/" + this.maxHp, 432.5, 108);
     }
 }
 
 function attack(weapon, enemy) {
     enemy.hp -= Math.floor(rng(weapon.minDmg, weapon.maxDmg) - enemy.def / 2);
-    console.log(enemy.hp)
+    console.log(enemy.hp, Math.floor(theEnemy.hp / theEnemy.maxHp * 100))
 }
 
 function generateRarity() {
