@@ -16,14 +16,34 @@ function rng(a, b) {
 function randInt(a, b) {
     return Math.floor(rng(a, b + 1))
 }
+
 var mouse = {
     x: undefined,
     y: undefined
 };
 
+var dblclick = {
+    x: undefined,
+    y: undefined
+};
+
+var weaponOdds = {
+    common: 2000,
+    uncommon: 400,
+    rare: 100,
+    epic: 40,
+    legenadry: 10,
+    mythical: 1
+};
+
 window.addEventListener("mousemove", function(m) {
     mouse.x = m.x;
     mouse.y = m.y;
+});
+
+window.addEventListener("dblclick", function(m) {
+    dblclick.x = m.x;
+    dblclick.y = m.y;
 });
 
 var set_1A = ["Wooden", "Paper", "Trash", "Candy", "Copper", "Blunt", "Cheese", "Rusted", "Broken", 
@@ -55,8 +75,8 @@ function getRarityColour(rarity) {
 function Weapon(name, dmg, rarity) {
     this.name = name;
     this.rarity = rarity;
-    this.minDmg = Math.max(Math.floor(dmg * 0.8), 1);
-    this.maxDmg = Math.max(Math.floor(dmg * 1.2), 1);
+    this.minDmg = Math.max(Math.floor(dmg * rng(60, 100) / 100), 1);
+    this.maxDmg = Math.max(Math.floor(dmg * rng(100, 140) / 100), this.minDmg);
     this.sprite = [0, 0];
 
     this.generateSprite = function(rarity) {
@@ -88,8 +108,10 @@ function Enemy(xpos, ypos, hp, def) {
     this.def = def;
 
     this.draw = function() {
-        c.fillStyle = "red";
-        c.fillRect(this.x, this.y, 40, 40);
+        image = new Image();
+        image.src = "Sprites/Enemy/enemy2.png";
+
+        c.drawImage(image, 450, 32, 64, 64);
     }
 }
 
@@ -112,6 +134,20 @@ function generateRarity() {
         return "legendary";
     } else {
         return "mythical";
+    }
+}
+
+function probabilities() {
+    c.fillStyle = "white";
+    var sum = 0;
+    for (let i in weaponOdds) {
+        sum += weaponOdds[i];
+    }
+    c.font = "10px arial";
+    let n = 0;
+    for (let i in weaponOdds) {
+        c.fillText("1/" + Number(sum / weaponOdds[i]).toFixed(1), 100, 50 + 10 * n);
+        n++;
     }
 }
 
@@ -157,21 +193,62 @@ function spawnEnemy() {
 }
 
 function dispWindow(mouse) {
-    var y = Math.floor((mouse.y - 200) / 36);
-    var x = Math.floor(mouse.x / 36);
-    var item = inventory[x + 16 * y]
+    var item;
+    if (mouse.x >= 40 && mouse.y >= 40 && mouse.x <= 76 && mouse.y <= 76) { // Check if mouse over equipped
+        item = leftHand;
+    } else { // Check if over inventory
+        var x = Math.floor(mouse.x / 36);        
+        var y = Math.floor((mouse.y - 200) / 36);
+        var item = inventory[x + 16 * y]
+    }
     if (item != undefined) {
         c.beginPath();
+        c.fillStyle = "black"
         c.strokeStyle = "white"
-        c.rect(mouse.x, mouse.y, 140, -200);
+        var r = { // Parameters for rect
+            x: 140, 
+            y: -120,
+            width: mouse.x,
+            length: mouse.y
+        };
+        if (mouse.x + r.x > 600) {
+            r.x = -140;
+            r.width += r.x;
+        } else {
+            r.x = 140;
+        }
+        if (mouse.y + r.y < 0) {
+            r.y = 120;
+            r.length += 120;
+        } else {
+            r.y = -120;
+        }
+        c.rect(mouse.x, mouse.y, r.x, r.y);
         c.fill();
         c.stroke();
         c.fillStyle = "white";
-        c.fillText("Name: " + item.name, mouse.x, mouse.y - 190);
-        c.fillText("Damage: " + item.minDmg + " - " + item.maxDmg, mouse.x, mouse.y - 180);
+        c.font = "10px arial";
+        c.fillText("Name: " + item.name, r.width, r.length - 110);
+        c.fillText("Damage: " + item.minDmg + " - " + item.maxDmg, r.width, r.length - 100);
         c.fillStyle = getRarityColour(item.rarity);
-        c.fillText("Rarity: " + item.rarity, mouse.x, mouse.y - 170)
+        c.fillText("Rarity: " + item.rarity, r.width, r.length - 90)
     }
+}
+
+function swapWeapon(dblclick) {
+    if (dblclick.x == undefined) {
+        return;
+    }
+    var x = Math.floor(dblclick.x / 36);    
+    var y = Math.floor((dblclick.y - 200) / 36);
+    var item = inventory[x + 16 * y];
+    if (item != undefined) {
+        temp = leftHand;
+        leftHand = item;
+        inventory[x + 16 * y] = temp;
+    }
+    dblclick.x = undefined;
+    dblclick.y = undefined;
 }
 
 var inventory = [];
@@ -185,6 +262,7 @@ function update() {
     c.fillStyle = "black";
     c.fillRect(0, 0, innerWidth, innerHeight);
     leftHand.draw(40, 40);
+    theEnemy.draw();
     for (let i = 0; i < inventory.length; i++) {
         inventory[i].draw(36 * (i % 16), 200 + 36 * Math.floor(i / 16));
     }
@@ -195,6 +273,8 @@ function update() {
     if (theEnemy.hp <= 0) {
         theEnemy = spawnEnemy();
     }
+    probabilities();
+    swapWeapon(dblclick);    
     dispWindow(mouse);
 }
 
