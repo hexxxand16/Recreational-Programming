@@ -6,6 +6,7 @@ canvas.style.width = "600px";
 canvas.style.height = "600px";
 var c = canvas.getContext("2d");
 c.scale(2, 2);
+c.imageSmoothingEnabled = false;
 
 // Generates random numbers between a and b (inclusive)
 function rng(a, b) {
