@@ -103,7 +103,7 @@ def control(p1, p2, pile, first, depth):
     if first:
         score = -10000
         if not p1_plays:
-            return play(p1, p2, pile, False, depth - 1)
+            return control(p1, p2, pile, False, depth - 1)
         for i in p1_plays:
             new_pile = pile.copy()
             new_p1 = p1.copy()
@@ -113,13 +113,70 @@ def control(p1, p2, pile, first, depth):
     else:
         score = 10000
         if not p2_plays:
-            return play(p1, p2, pile, True, depth - 1)
+            return control(p1, p2, pile, True, depth - 1)
         for i in p2_plays:
             new_pile = pile.copy()
             new_p2 = p2.copy()
             new_pile.append(i)
             new_p2.remove(i)
             score = min(score, control(p1, new_p2, new_pile, True, depth - 1))
+
+    return score
+
+
+# Minimax alpha-beta heuristic which values connected cards
+def controlab(p1, p2, pile, first, depth, alpha, beta):
+    # Heuristic
+    p1_plays = playableCards(p1, pile)
+    p2_plays = playableCards(p2, pile)
+    if depth == 0:
+        eval = 0
+        for i in p1:
+            if i.connect == 0:
+                eval += 5
+            elif i.connect == 2:
+                eval += 2
+            elif i.connect == 3:
+                eval -= 10
+        for i in p2:
+            if i.connect == 0:
+                eval -= 5
+            elif i.connect == 2:
+                eval -= 2
+            elif i.connect == 3:
+                eval += 10
+        return eval
+    if not p1:
+        return 10000
+    elif not p2:
+        return -10000
+
+    if first:
+        score = -10000
+        if not p1_plays:
+            return controlab(p1, p2, pile, False, depth - 1, alpha, beta)
+        for i in p1_plays:
+            new_pile = pile.copy()
+            new_p1 = p1.copy()
+            new_pile.append(i)
+            new_p1.remove(i)
+            score = max(score, controlab(new_p1, p2, new_pile, False, depth - 1, alpha, beta))
+            alpha = max(alpha, score)
+            if alpha >= beta:
+                break
+    else:
+        score = 10000
+        if not p2_plays:
+            return controlab(p1, p2, pile, True, depth - 1, alpha, beta)
+        for i in p2_plays:
+            new_pile = pile.copy()
+            new_p2 = p2.copy()
+            new_pile.append(i)
+            new_p2.remove(i)
+            score = min(score, controlab(p1, new_p2, new_pile, True, depth - 1, alpha, beta))
+            beta = min(beta, score)
+            if alpha >= beta:
+                break
 
     return score
     
@@ -171,7 +228,7 @@ def evaluate(p1, p2, pile, first, depth):
             new_p1 = p1.copy()
             new_pile.append(i)
             new_p1.remove(i)
-            cur_score = max(score, control(new_p1, p2, new_pile, False, depth))
+            cur_score = max(score, controlab(new_p1, p2, new_pile, False, 11, -10000, 10000))
             if cur_score > score:
                 score = cur_score
                 best_move = i
@@ -188,7 +245,7 @@ def evaluate(p1, p2, pile, first, depth):
             new_p2 = p2.copy()
             new_pile.append(i)
             new_p2.remove(i)
-            cur_score = min(score, plays(p1, new_p2, new_pile, True, depth))
+            cur_score = min(score, control(p1, new_p2, new_pile, True, 7))
             if cur_score < score:
                 score = cur_score
                 best_move = i
@@ -242,14 +299,14 @@ def main():
             if not playableCards(p1, pile):
                 first = False
                 continue
-            move = evaluate(p1, p2, pile, True, 7)
+            move = evaluate(p1, p2, pile, True, 11)
             playCard(p1, p2, move, pile)
             first = False
         else:
             if not playableCards(p2, pile):
                 first = True
                 continue
-            move = evaluate(p1, p2, pile, False, 7)
+            move = evaluate(p1, p2, pile, False, 11)
             playCard(p1, p2, move, pile)
             first = True
 
