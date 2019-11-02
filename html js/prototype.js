@@ -13,11 +13,10 @@ function rng(a, b) {
     return Math.random() * (b - a) + a;
 }
 
-// Generates random intergers between a and b (inclusive)
+// Generates random integers between a and b (inclusive)
 function randInt(a, b) {
     return Math.floor(rng(a, b + 1))
 }
-
 
 var mouse = {
     x: undefined,
@@ -84,11 +83,11 @@ function Player() {
     }
 }
 
-var set_1A = ["Wooden", "Paper", "Trash", "Candy", "Copper", "Blunt", "Cheese", "Rusted", "Broken", 
+var set_1A = ["Wooden", "Iron", "Paper", "Trash", "Candy", "Copper", "Blunt", "Cheese", "Rusted", "Broken", 
     "Inferior", "Unlucky", "Cursed", "Bronze"];
-var set_1B = ["Superior", "Iron", "Steel", "Silver", "Gold", "Platinum", "Sharp", "Lucky", "Powerful", "Fiery",  
-    "Frozen", "Beserker", "Magic"];
-var set_1C = ["Titanium", "Diamond", "Obsidian", "Ultimate", "Holy", "Evil", "Chaotic", "Unobtainium"];
+var set_1B = ["Superior",  "Steel", "Silver", "Gold", "Platinum", "Sharp", "Lucky", "Powerful", "Fiery",  
+    "Frozen", "Beserker", "Magic", "Obsidian"];
+var set_1C = ["Titanium", "Diamond", "Ultimate", "Holy", "Evil", "Unobtainium", "Ancient"];
 
 function getRarityColour(rarity) {
     switch(rarity) {

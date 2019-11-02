@@ -93,7 +93,8 @@ onkeydown = onkeyup = function(e) {
     map[e.keyCode] = e.type == "keydown";
 }
 
-window.setInterval(spray, 1);
+window.setInterval(spray, 250);
+
 function update() {
     requestAnimationFrame(update);
     c.fillStyle = "black";
