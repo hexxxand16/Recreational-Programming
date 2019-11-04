@@ -1,195 +1,127 @@
-/*
- * This file is part of MinimalGS, which is a GameScript for OpenTTD
- * Copyright (C) 2012-2013  Leif Linse
- *
- * MinimalGS is free software; you can redistribute it and/or modify it 
- * under the terms of the GNU General Public License as published by
- * the Free Software Foundation; version 2 of the License
- *
- * MinimalGS is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with MinimalGS; If not, see <http://www.gnu.org/licenses/> or
- * write to the Free Software Foundation, Inc., 51 Franklin Street, 
- * Fifth Floor, Boston, MA 02110-1301 USA.
- *
- */
-
-/** Import SuperLib for GameScript **/
-import("util.superlib", "SuperLib", 36);
-Result <- SuperLib.Result;
-Log <- SuperLib.Log;
-Helper <- SuperLib.Helper;
-Tile <- SuperLib.Tile;
-Direction <- SuperLib.Direction;
-Town <- SuperLib.Town;
-Industry <- SuperLib.Industry;
-Story <- SuperLib.Story;
-// Additional SuperLib sub libraries can be found here:
-// http://dev.openttdcoop.org/projects/superlib/repository
-
-/** Import other libs **/
-// There are several other libraries for Game Scripts out there. Check out
-// http://bananas.openttd.org/en/gslibrary/ for an up to date list.
-//
-// Remember to set dependencies in the bananas web manager for all libraries
-// that you use. This way users will automatically get all libraries of the
-// version you selected when they download your Game Script.
+require("version.nut");
 
 
-/** Import other source code files **/
-require("version.nut"); // get SELF_VERSION
-//require("some_file.nut");
-//..
+class MyAI extends AIController {
+	towns_used = null;
 
 
-class MainClass extends GSController 
-{
-	_loaded_data = null;
-	_loaded_from_version = null;
-	_init_done = null;
+	// Constructor for AI (there's a time limit on this)
+	function constructor();
+	// For things we want to initialise
+	function Init();
+	// Main driver
+	function Start();
+	// Required functions
+	function Save();
+	function Load(version, tbl);
 
-	/*
-	 * This method is called when your GS is constructed.
-	 * It is recommended to only do basic initialization of member variables
-	 * here.
-	 * Many API functions are unavailable from the constructor. Instead do
-	 * or call most of your initialization code from MainClass::Init.
-	 */
-	constructor()
-	{
-		this._init_done = false;
-		this._loaded_data = null;
-		this._loaded_from_version = null;
-	}
+	function FindAirportSpot(airportType);
+	function BuildAirport();
+	
 }
 
-/*
- * This method is called by OpenTTD after the constructor, and after calling
- * Load() in case the game was loaded from a save game. You should never
- * return back from this method. (if you do, the script will crash)
- *
- * Start() contains of two main parts. First initialization (which is
- * located in Init), and then the main loop.
- */
-function MainClass::Start()
-{
-	// Some OpenTTD versions are affected by a bug where all API methods
-	// that create things in the game world during world generation will
-	// return object id 0 even if the created object has a different ID. 
-	// In that case, the easiest workaround is to delay Init until the 
-	// game has started.
-	if (Helper.HasWorldGenBug()) GSController.Sleep(1);
+// Function to load required data
+function MyAI::Init() {
+	this.towns_used = AIList();
+	AICompany.SetLoanAmount(AICompany.GetMaxLoanAmount());
+}
+
+function BuildAirport() {
+	local airport_type = AIAirport.AT_SMALL;
+
+	local tile_1 = this.FindAirportSpot(airport_type, 0);
+	if (tile_1 < 0) {
+		return -1;
+	}
+	local tile_2 = this.FindAirportSpot(airport_type, tile_1);
+	if (tile_2 < 0) {
+		this.towns_used.RemoveValue(tile_1)
+		return -1;
+	}
+	AIAirport.BuildAirport(tile_1, airport_type, AIStation.STATION_NEW);
+	AIAirport.BuildAirport(tile_2, airport_type, AIStation.STATION_NEW);
+}
+
+function FindAirportSpot(airportType, center_tile) {
+	// Airport specs
+	local airport_x, airport_y, airport_rad;
+
+	airport_x = AIAirport.GetAirportWidth(airportType);
+	airport_y = AIAirport.GetAirportHeight(airportType);
+	airport_rad = AIAirport.GetAirportCoverageRadius(airportType);
+
+	// Get list of all towns
+	local town_list = AITownList();
+	// Remove towns already in use
+	town_list.RemoveList(this.towns_used);
+	
+	for (town in towns) {
+		AILog.Info("Going to sleep");
+		Sleep(1);
+
+		local tile = AITown.GetLocation(town);
+
+		local list = AITileList();
+
+		list.AddRectangle(tile - AIMap.GetTileIndex(15, 15), tile + AIMap.GetTileIndex(15, 15));
+		// Creates binary list where 1 is a tile where we can build an airport
+		list.Valuate(AITileList.IsBuildableRectangle, airport_x, airport_y);
+		// Keep all tiles where we can build the airport
+		list.KeepValue(1);
+		// Check if we are already trying to build an airport at this spot
+		if (center_tile != 0) {
+			list.Valuate(AITile.GetDistanceSquareToTile, center_tile);
+			list.KeepAboveValue(625);
+		}
+		list.Valuate(AITile.GetCargoAcceptance, AICargo.CC_PASSENGERS, airport_x, airport_y, airport_rad);
+		list.RemoveBelowValue(10);
+
+		// If failed to find a spot
+		if (list.Count() == 0) {
+			continue;
+		} else {
+			local test = AITestMode();
+			local good_tile = 0;
+
+			for (tiles in list) {
+				AILog.Info("Going to sleep");
+				Sleep(1);
+				// See if we can build the airport
+				if (!AIAirport.BuildAirport(tiles, airport_type, AIStation.STATION_NEW)) {
+					continue;
+				}
+				good_tile = tiles;
+				break;
+			}
+			if (good_tile == 0) {
+				continue;
+			}
+		}
+	AILog.Info("Found a spot to build an airport");
+	this.towns_used.AddItem(town.tile);
+	return tile;
+	}
+	return -1;
+}
+
+// Main Driver
+function MyAI::Start() {
 
 	this.Init();
 
-	// Wait for the game to start (or more correctly, tell OpenTTD to not
-	// execute our GS further in world generation)
-	GSController.Sleep(1);
-
-	// Game has now started and if it is a single player game,
-	// company 0 exist and is the human company.
-
-	// Main Game Script loop
-	local last_loop_date = GSDate.GetCurrentDate();
+	// Counter for current tick
+	local counter = 0;
 	while (true) {
-		local loop_start_tick = GSController.GetTick();
-
-		// Handle incoming messages from OpenTTD
-		this.HandleEvents();
-
-		// Reached new year/month?
-		local current_date = GSDate.GetCurrentDate();
-		if (last_loop_date != null) {
-			local year = GSDate.GetYear(current_date);
-			local month = GSDate.GetMonth(current_date);
-			if (year != GSDate.GetYear(last_loop_date)) {
-				this.EndOfYear();
-			}
-			if (month != GSDate.GetMonth(last_loop_date)) {
-				this.EndOfMonth();
-			}
-		}
-		last_loop_date = current_date;
-	
-		// Loop with a frequency of five days
-		local ticks_used = GSController.GetTick() - loop_start_tick;
-		GSController.Sleep(max(1, 5 * 74 - ticks_used));
-	}
-}
-
-/*
- * This method is called during the initialization of your Game Script.
- * As long as you never call Sleep() and the user got a new enough OpenTTD
- * version, all initialization happens while the world generation screen
- * is shown. This means that even in single player, company 0 doesn't yet
- * exist. The benefit of doing initialization in world gen is that commands
- * that alter the game world are much cheaper before the game starts.
- */
-function MainClass::Init()
-{
-	if (this._loaded_data != null) {
-		// Copy loaded data from this._loaded_data to this.*
-		// or do whatever you like with the loaded data
-	} else {
-		// construct goals etc.
-	}
-
-	// Indicate that all data structures has been initialized/restored.
-	this._init_done = true;
-	this._loaded_data = null; // the loaded data has no more use now after that _init_done is true.
-}
-
-/*
- * This method handles incoming events from OpenTTD.
- */
-function MainClass::HandleEvents()
-{
-	if(GSEventController.IsEventWaiting()) {
-		local ev = GSEventController.GetNextEvent();
-		if (ev == null) return;
-
-		local ev_type = ev.GetEventType();
-		switch (ev_type) {
-			case GSEvent.ET_COMPANY_NEW: {
-				local company_event = GSEventCompanyNew.Convert(ev);
-				local company_id = company_event.GetCompanyID();
-
-				// Here you can welcome the new company
-				Story.ShowMessage(company_id, GSText(GSText.STR_WELCOME, company_id));
-				break;
-			}
-
-			// other events ...
+		if (counter % 1000) {
+			AILog.Info("Trying to build an airport");
+			this.BuildAirport();
 		}
 	}
+	Sleep(100);
+	ticker += 100;
 }
 
-/*
- * Called by our main loop when a new month has been reached.
- */
-function MainClass::EndOfMonth()
-{
-}
-
-/*
- * Called by our main loop when a new year has been reached.
- */
-function MainClass::EndOfYear()
-{
-}
-
-/*
- * This method is called by OpenTTD when an (auto)-save occurs. You should
- * return a table which can contain nested tables, arrays of integers,
- * strings and booleans. Null values can also be stored. Class instances and
- * floating point values cannot be stored by OpenTTD.
- */
-function MainClass::Save()
-{
+function MyAI::Save() {
 	Log.Info("Saving data to savegame", Log.LVL_INFO);
 
 	// In case (auto-)save happens before we have initialized all data,
@@ -204,12 +136,8 @@ function MainClass::Save()
 	};
 }
 
-/*
- * When a game is loaded, OpenTTD will call this method and pass you the
- * table that you sent to OpenTTD in Save().
- */
-function MainClass::Load(version, tbl)
-{
+
+function MyAI::Load(version, tbl) {
 	Log.Info("Loading data from savegame made with version " + version + " of the game script", Log.LVL_INFO);
 
 	// Store a copy of the table from the save game

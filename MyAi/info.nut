@@ -20,15 +20,15 @@
 
 require("version.nut");
 
-class FMainClass extends GSInfo {
-	function GetAuthor()		{ return "[Insert your name here]"; }
-	function GetName()			{ return "MinimalGS"; }
+class MyAI extends AIInfo {
+	function GetAuthor()		{ return "[Nameless]"; }
+	function GetName()			{ return "MyAI"; }
 	function GetDescription() 	{ return "Minimal GS is a Game Script boilerplate"; }
 	function GetVersion()		{ return SELF_VERSION; }
-	function GetDate()			{ return "2013-11-05"; }
+	function GetDate()			{ return "2019-11-04"; }
 	function CreateInstance()	{ return "MainClass"; }
-	function GetShortName()		{ return "MINI"; } // Replace this with your own unique 4 letter string
-	function GetAPIVersion()	{ return "1.2"; }
+	function GetShortName()		{ return "MYAI"; } // Replace this with your own unique 4 letter string
+	function GetAPIVersion()	{ return "1.9"; }
 	function GetURL()			{ return ""; }
 
 	function GetSettings() {
@@ -37,4 +37,4 @@ class FMainClass extends GSInfo {
 	}
 }
 
-RegisterGS(FMainClass());
+RegisterAI(FMainClass());
