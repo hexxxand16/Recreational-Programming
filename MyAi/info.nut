@@ -37,4 +37,4 @@ class MyAI extends AIInfo {
 	}
 }
 
-RegisterAI(FMainClass());
+RegisterAI(MyAI());
