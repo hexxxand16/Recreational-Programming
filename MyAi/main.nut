@@ -64,7 +64,7 @@ function MyAI::FindAirportSpot(airportType, center_tile) {
 	// Remove towns already in use
 	town_list.RemoveList(this.towns_used);
 	
-	foreach (town in towns) {
+	foreach (town in town_list) {
 		AILog.Info("Going to sleep");
 		Sleep(1);
 
@@ -82,7 +82,7 @@ function MyAI::FindAirportSpot(airportType, center_tile) {
 			list.Valuate(AITile.GetDistanceSquareToTile, center_tile);
 			list.KeepAboveValue(625);
 		}
-		list.Valuate(AITile.GetCargoAcceptance, AICargo.CC_PASSENGERS, airport_x, airport_y, airport_rad);
+		list.Valuate(AITile.GetCargoAcceptance, this.passenger_cargo_id, airport_x, airport_y, airport_rad);
 		list.RemoveBelowValue(10);
 
 		// If failed to find a spot
@@ -93,10 +93,11 @@ function MyAI::FindAirportSpot(airportType, center_tile) {
 			local good_tile = 0;
 
 			foreach (tiles in list) {
-				AILog.Info("Going to sleep");
-				Sleep(1);
 				// See if we can build the airport
-				if (!AIAirport.BuildAirport(tiles, airport_type, AIStation.STATION_NEW)) {
+				local location = AISign.BuildSign(tiles, "Trying to build an airport here");
+				Sleep(100)
+				AISign.RemoveSign(location);
+				if (!AIAirport.BuildAirport(tiles, airportType, AIStation.STATION_NEW)) {
 					continue;
 				}
 				good_tile = tiles;
@@ -106,9 +107,9 @@ function MyAI::FindAirportSpot(airportType, center_tile) {
 				continue;
 			}
 		}
-	AILog.Info("Found a spot to build an airport");
-	this.towns_used.AddItem(town.tile);
-	return tile;
+		AILog.Info("Found a spot to build an airport");
+		this.towns_used.AddItem(town, tiles);
+		return tiles;
 	}
 	return -1;
 }
