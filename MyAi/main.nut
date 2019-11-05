@@ -3,6 +3,7 @@ require("version.nut");
 
 class MyAI extends AIController {
 	towns_used = null;
+	passenger_cargo_id = null;
 
 
 	// Constructor for AI (there's a time limit on this)
@@ -15,7 +16,7 @@ class MyAI extends AIController {
 	function Save();
 	function Load(version, tbl);
 
-	function FindAirportSpot(airportType);
+	function FindAirportSpot(airportType, center_tile);
 	function BuildAirport();
 	
 }
@@ -23,10 +24,18 @@ class MyAI extends AIController {
 // Function to load required data
 function MyAI::Init() {
 	this.towns_used = AIList();
+	// Get the id for passenger cargo
+	local cargo = AICargoList();
+	foreach (i in cargo) {
+		if (AICargo.HasCargoClass(i, AICargo.CC_PASSENGERS)) {
+			this.passenger_cargo_id = i;
+			break;
+		}
+	}
 	AICompany.SetLoanAmount(AICompany.GetMaxLoanAmount());
 }
 
-function BuildAirport() {
+function MyAI::BuildAirport() {
 	local airport_type = AIAirport.AT_SMALL;
 
 	local tile_1 = this.FindAirportSpot(airport_type, 0);
@@ -42,7 +51,7 @@ function BuildAirport() {
 	AIAirport.BuildAirport(tile_2, airport_type, AIStation.STATION_NEW);
 }
 
-function FindAirportSpot(airportType, center_tile) {
+function MyAI::FindAirportSpot(airportType, center_tile) {
 	// Airport specs
 	local airport_x, airport_y, airport_rad;
 
@@ -55,7 +64,7 @@ function FindAirportSpot(airportType, center_tile) {
 	// Remove towns already in use
 	town_list.RemoveList(this.towns_used);
 	
-	for (town in towns) {
+	foreach (town in towns) {
 		AILog.Info("Going to sleep");
 		Sleep(1);
 
@@ -65,7 +74,7 @@ function FindAirportSpot(airportType, center_tile) {
 
 		list.AddRectangle(tile - AIMap.GetTileIndex(15, 15), tile + AIMap.GetTileIndex(15, 15));
 		// Creates binary list where 1 is a tile where we can build an airport
-		list.Valuate(AITileList.IsBuildableRectangle, airport_x, airport_y);
+		list.Valuate(AITile.IsBuildableRectangle, airport_x, airport_y);
 		// Keep all tiles where we can build the airport
 		list.KeepValue(1);
 		// Check if we are already trying to build an airport at this spot
@@ -83,7 +92,7 @@ function FindAirportSpot(airportType, center_tile) {
 			local test = AITestMode();
 			local good_tile = 0;
 
-			for (tiles in list) {
+			foreach (tiles in list) {
 				AILog.Info("Going to sleep");
 				Sleep(1);
 				// See if we can build the airport
@@ -112,13 +121,13 @@ function MyAI::Start() {
 	// Counter for current tick
 	local counter = 0;
 	while (true) {
-		if (counter % 1000) {
+		if (counter % 1000 == 0) {
 			AILog.Info("Trying to build an airport");
 			this.BuildAirport();
 		}
-	}
-	Sleep(100);
-	ticker += 100;
+		this.Sleep(100);
+		counter += 100;
+	}	
 }
 
 function MyAI::Save() {

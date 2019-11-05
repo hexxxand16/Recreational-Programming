@@ -26,7 +26,7 @@ class MyAI extends AIInfo {
 	function GetDescription() 	{ return "Minimal GS is a Game Script boilerplate"; }
 	function GetVersion()		{ return SELF_VERSION; }
 	function GetDate()			{ return "2019-11-04"; }
-	function CreateInstance()	{ return "MainClass"; }
+	function CreateInstance()	{ return "MyAI"; }
 	function GetShortName()		{ return "MYAI"; } // Replace this with your own unique 4 letter string
 	function GetAPIVersion()	{ return "1.9"; }
 	function GetURL()			{ return ""; }
